@@ -1,19 +1,7 @@
-/*
-var canvas = document.createElement("canvas")
-var ctx = canvas.getContext('2d')
-canvas.width=500
-canvas.height=500
-document.body.appendChild(canvas)
-
-ctx.fillColor="black"
-ctx.fillRect(0,0,canvas.width,canvas.height)
-*/
 var fc = require('fc')
 var vec2 = require('vec2')
 var ctx = fc(render)
-
 var points = [[100,100],[200,100],[150,200],[250,200],[300,300],[50,300]]
-
 var mouse = {
   down: false,
   pos: [0, 0]
@@ -24,17 +12,16 @@ window.addEventListener('mousemove', function(e) {
   mouse.pos[1] = e.clientY
   ctx.dirty()
 })
-
 window.addEventListener('mouseup', function() {
   mouse.down = false
   ctx.dirty()
 })
-
 function render() {
   ctx.clear()
   rPoints(points)
   connect()
   drawNormals()
+  drawNormals2()
   if (mouse.down) {
     for (var i=0; i<points.length; i++) {
       var point = points[i]
@@ -44,7 +31,6 @@ function render() {
     }
 
   }
-
 }
 function connect(){
   ctx.beginPath()
@@ -55,11 +41,40 @@ function connect(){
   ctx.stroke()
 }
 function drawNormals2(){
-  for (var i = 0; i < points.length-1; i++) {
+  ctx.strokeStyle="yellow"
+  ctx.lineWidth=0.6;
+  for (var i = 0; i < points.length; i++) {
+    /*delta = pointDifference(points[i-1],points[i])
+    angleA = Math.atan2(delta[1],delta[0]])
+    delta = pointDifference(points[i],points[i+1])
+    angleB = Math.atan2(points[i],points[i+1])*/
+    var vertical = vec2(0,1)
+    var horizontal = vec2(1,0)
 
-  }
+    var a = horizontal.angleTo(vertical)
+    console.log(a*180/Math.PI)
+    //console.log(b*180/Math.PI)
+    var prev = i >= 0 ? i-1 : points.length - 1
+    var next = i > points.length - 1 ? 0 : i + 1
+    var p = vec2(points[prev])
+    var c = vec2(points[i])
+    var n = vec2(points[next])
+
+    var angle1 = c.angleTo(p)
+    var angle2 = c.angleTo(n)
+    var angle3 = (angle1+angle2)/2
+
+    ctx.beginPath()
+    ctx.moveTo(c.x,c.y)
+    var normal = vec2(50, 0).rotate(angle1).add(c)
+    ctx.lineTo(normal.x,normal.y)
+    ctx.font="6px"
+    ctx.fillText(Math.ceil(angle1*180/Math.PI/100)*100 ,c.x+10,c.y+10)
+    ctx.fillText(Math.ceil(angle2*180/Math.PI/100)*100 ,c.x+10,c.y+20)
+    ctx.fillText(Math.ceil(angle3*180/Math.PI/100)*100 ,c.x+10,c.y+30)
+    ctx.stroke()
+	}
 }
-
 function drawNormals(){
 
   ctx.strokeStyle="cyan"
@@ -116,7 +131,8 @@ function rRadiusONEtoMANY(points,x){
 
 		//draw cirle stroke
 		ctx.beginPath()
-		ctx.strokeStyle = "red"
+		ctx.strokeStyle = "hsl(180,100%,50%)"
+		ctx.lineWidth = .05
 		ctx.arc(pointA[0],pointA[1],dist(pointA,points[i]), 0, 2*Math.PI)
 		ctx.stroke()
 	}
