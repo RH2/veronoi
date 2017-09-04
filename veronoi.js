@@ -22,6 +22,7 @@ function render() {
   connect()
   drawNormals()
   drawNormals2()
+  drawNormals3()
   if (mouse.down) {
     for (var i=0; i<points.length; i++) {
       var point = points[i]
@@ -74,6 +75,49 @@ function drawNormals2(){
     ctx.fillText(Math.ceil(angle3*180/Math.PI/100)*100 ,c.x+10,c.y+30)
     ctx.stroke()
 	}
+}
+
+/*
+  return a vertex normal between two line segments that share a common
+  point (c)
+
+  arguments:
+    p - line 0 start point
+    c - common point (line 0 end / line 1 start)
+    n - line 1 end point
+
+  returns:
+    normalized vec2
+*/
+function vertexNormal (p, c, n) {
+  var e1 = c.subtract(p, true)
+  var e2 = c.subtract(n, true)
+  var d = e1.add(e2, true).normalize()
+
+  if (e1.perpDot(e2) > 0) {
+    d.negate()
+  }
+
+  return d
+}
+
+function drawNormals3 () {
+  ctx.strokeStyle = '#f0f'
+  ctx.lineWidth = 0.6
+  for (var i = 0; i < points.length; i++) {
+    var prev = i > 0 ? i - 1 : points.length - 1
+    var next = i > points.length - 1 ? 0 : i + 1
+    var p = vec2(points[prev])
+    var c = vec2(points[i])
+    var n = vec2(points[next])
+
+    var normal = vertexNormal(p, c, n).multiply(50).add(c)
+
+    ctx.beginPath()
+    ctx.moveTo(c.x, c.y)
+    ctx.lineTo(normal.x, normal.y)
+    ctx.stroke()
+  }
 }
 function drawNormals(){
 
