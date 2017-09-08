@@ -4,8 +4,11 @@
   },
   "dependencies": {
     "budo": "^10.0.4",
+    "ctx-camera": "github:tmpvar/ctx-camera",
+    "ctx-translate-center": "^1.0.0",
     "distance-to-line-segment": "^0.2.0",
     "fc": "^1.5.2",
+    "polygon": "^1.0.2",
     "segseg.closest": "0.0.1",
     "vec2": "^1.6.0"
   }
