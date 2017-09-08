@@ -11,9 +11,11 @@ var mouse = {
 var ctx = fc(render)
 var camera = createCamera(ctx, window, {})
 
-var points = [[100,100],[200,100],[150,200],[250,200],[300,300], [150, 450],[50,300], [50, 150]]
+//var points = [[100,100],[200,100],[150,200],[250,200],[300,300], [150, 450],[50,300], [50, 150]]
+var points = [[50,100],[100,120],[145,110],[140,100],[150,105],[160,100],[155,110],[160,120],[150,115],[130,150],[150,200],[100,180],[50,200],[70,150]]
+scalePoints(10)
 // var points = [[100, 100], [200, 100], [200, 400], [50, 400], [100, 200]]
-var points = require('./ny').map(p => [p[0] * 500, p[1] * -500])
+//var points = require('./ny').map(p => [p[0] * 500, p[1] * -500])
 var poly = polygon(points).dedupe().simplify()
 
 window.addEventListener('mousemove', function(e) {
@@ -41,8 +43,8 @@ function render() {
     ctx.pointToWorld(mouse.pos, camera.mouse.pos)
   rPoints(points)
   connect()
-  // drawNormals()
-  // drawNormals2()
+  //drawNormals()
+  //drawNormals2()
   drawNormals3()
 
 
@@ -314,7 +316,7 @@ function drawNormals3 () {
   ctx.strokeStyle = '#f0f'
   ctx.lineWidth = 0.6
   poly.each(function (p, c, n) {
-    var normal = vertexNormal(p, c, n).multiply(20)
+    var normal = vertexNormal(p, c, n).multiply(50)
     var out = normal.add(c, true)
 
     ctx.beginPath()
@@ -384,7 +386,12 @@ function rRadiusONEtoMANY(points,x){
 		ctx.arc(pointA[0],pointA[1],dist(pointA,points[i]), 0, 2*Math.PI)
 		ctx.stroke()
 	}
-
+}
+function scalePoints(scale){
+	for (var i = 0; i < points.length; i++) {
+		points[i][0]=points[i][0]*scale
+		points[i][1]=points[i][1]*scale
+	}
 }
 window.rRadiusONEtoMANY = rRadiusONEtoMANY
 function createInboundPoint(){
