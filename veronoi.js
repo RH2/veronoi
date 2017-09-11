@@ -7,15 +7,13 @@ var mouse = {
   down: false,
   pos: [0, 0]
 }
-
 var ctx = fc(render)
 var camera = createCamera(ctx, window, {})
-
 //var points = [[100,100],[200,100],[150,200],[250,200],[300,300], [150, 450],[50,300], [50, 150]]
-var points = [[50,100],[100,120],[145,110],[140,100],[150,105],[160,100],[155,110],[160,120],[150,115],[130,150],[150,200],[100,180],[50,200],[70,150]]
-scalePoints(10)
+//var points = [[50,100],[100,120],[145,110],[140,100],[150,105],[160,100],[155,110],[160,120],[150,115],[130,150],[150,200],[100,180],[50,200],[70,150]]
+//scalePoints(10)
 // var points = [[100, 100], [200, 100], [200, 400], [50, 400], [100, 200]]
-//var points = require('./ny').map(p => [p[0] * 500, p[1] * -500])
+var points = require('./ny').map(p => [p[0] * 500, p[1] * -500])
 var poly = polygon(points).dedupe().simplify()
 
 window.addEventListener('mousemove', function(e) {
@@ -32,26 +30,21 @@ window.addEventListener('mouseup', function() {
 var aabb = poly.aabb()
 aabb.center = [aabb.x + aabb.w/2, aabb.y + aabb.h / 2]
 function render() {
-
-
   ctx.clear()
-
   camera.begin()
     ctx.translate(-aabb.center[0], -aabb.center[1])
     center(ctx)
-
     ctx.pointToWorld(mouse.pos, camera.mouse.pos)
-  rPoints(points)
-  connect()
-  //drawNormals()
-  //drawNormals2()
+
+  //MAIN PROCESS
+  //rPoints(points) //DRAW THE POLYGON
+  connect()		  
   drawNormals3()
-
-
 
 
   var mousePos = vec2(mouse.pos)
   var medialAxis = []
+  var concave = [] 
   poly.each(function (p, c, n, i) {
     var radius = Math.max(aabb.w, aabb.h) * 1.5
     var normal = vertexNormal(p, c, n).negate()
@@ -65,6 +58,7 @@ function render() {
       ctx.arc(c.x, c.y, 5, 0, Math.PI * 2)
       ctx.strokeStyle = 'orange'
       ctx.stroke()
+      concave.push(i)
     }
 
     var sentinel = 100
@@ -106,48 +100,8 @@ function render() {
 
       radius = newRadius
     }
-    // rRadiusONEtoMANY(points, i)
   })
-
-
-  medialAxis.forEach((v, i) => {
-    // ctx.beginPath()
-    // ctx.strokeStyle = "red"
-    //
-    // var closest = poly.closestPointTo(v)
-    // var dist = closest.distance(v)
-    // ctx.moveTo(v.x + dist, v.y)
-    // ctx.arc(v.x, v.y, dist, 0, Math.PI*2)
-    // ctx.stroke()
-
-    var p = v.original
-    var mat = v
-    var dist = mat.distance(p)
-
-    var cycles = 5
-    for (var t=1; t<=cycles; t++) {
-
-      ctx.beginPath()
-      ctx.strokeStyle = `hsl(${(i / medialAxis.length) * 360}, 50%, 50%)`
-      var inc = p.lerp(mat, t/cycles, true)
-      ctx.arc(inc.x, inc.y, 5, 0, Math.PI*2)
-
-      ctx.beginPath()
-      var r = poly.closestPointTo(inc).distance(inc)
-      // var closest = poly.closestPointTo(v)
-      // var dist = closest.distance(v)
-      ctx.moveTo(inc.x + r, inc.y)
-      ctx.arc(inc.x, inc.y, r, 0, Math.PI*2)
-      if (t === cycles) {
-        ctx.save()
-        ctx.lineWidth = 2
-        ctx.stroke()
-        ctx.restore()
-      } else {
-        ctx.stroke()
-      }
-    }
-  })
+  //renderMedialAxis(medialAxis) //DEBUG DRAW CIRCLES
 
   ctx.save()
   ctx.lineWidth = 5
@@ -159,7 +113,35 @@ function render() {
     ctx.lineTo(next.x, next.y)
   })
   ctx.stroke()
+
+
+  // "BALLOON ANIMAL ALGORITHM"
+  var odd = true
+  if(concave.length/2==0){odd = false}
+
+  ctx.lineWidth = 3
+  ctx.strokeStyle="#00ff00"
+  ctx.beginPath()
+  ctx.moveTo(poly.x,poly.y)
+  //ctx.beginPath(medialAxis[concave[0]].x,medialAxis[concave[0]].y)
+  for (var i = 0; i < concave.length; i++) {
+  	var x = medialAxis[concave[i]].x
+  	var y = medialAxis[concave[i]].y
+  	ctx.lineTo(x,y)
+  }
+  ctx.stroke()
+
+
+
+
+
+
+
+
+
   ctx.restore()
+
+  // primitive collection attempt
   // var filtered = [medialAxis.shift()]
   // var point = filtered[0]
   // while (medialAxis.length > 0) {
@@ -167,19 +149,27 @@ function render() {
   //   point = medialAxis.splice(idx, 1)[0]
   //   filtered.push(point)
   // }
-  // ctx.save()
-  // ctx.lineWidth = 5
-  // ctx.beginPath()
-  // ctx.moveTo(filtered[0].x, filtered[0].y)
-  // filtered.forEach((p, i) => {
-  //   ctx.lineTo(p.x, p.y)
-  // })
-  // ctx.stroke()
-  // ctx.restore()
+  ctx.save()
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(medialAxis[0].x, medialAxis[0].y)
+  medialAxis.forEach((p, i) => {
+    ctx.lineTo(p.x, p.y)
+  })
+  ctx.stroke()
+  ctx.restore()
+  //ctx.beginPath()
+  //ctx.strokeStyle="pink"
+  //ctx.moveTo(medialAxis[concave[0]].x,medialAxis[concave[0]].y])
+  //concave.forEach(function(currentValue,index,array){
+  //	ctx.lineTo(medialAxis[currentValue].x,medialAxis[currentValue].y)
+  //})
+
+
+
+
   camera.end()
 }
-
-
 function closestVertexArray (array, vec) {
   var l = array.length
   var dist = Infinity
@@ -287,7 +277,6 @@ function drawNormals2(){
     ctx.stroke()
 	}
 }
-
 /*
   return a vertex normal between two line segments that share a common
   point (c)
@@ -314,7 +303,7 @@ function vertexNormal (p, c, n) {
 
 function drawNormals3 () {
   ctx.strokeStyle = '#f0f'
-  ctx.lineWidth = 0.6
+  ctx.lineWidth = 10
   poly.each(function (p, c, n) {
     var normal = vertexNormal(p, c, n).multiply(50)
     var out = normal.add(c, true)
@@ -406,4 +395,47 @@ function dist(a,b){
 	var d = [a[0]-b[0],a[1]-b[1]]
 	var distance = Math.sqrt(Math.pow(d[0],2)+Math.pow(d[1],2))
 	return distance;
+}
+
+function renderMedialAxis(medialAxis){
+  medialAxis.forEach((v, i) => {
+  	//console.log(concave)
+  	//console.log(poly)
+    // ctx.beginPath()
+    // ctx.strokeStyle = "red"
+    //
+    // var closest = poly.closestPointTo(v)
+    // var dist = closest.distance(v)
+    // ctx.moveTo(v.x + dist, v.y)
+    // ctx.arc(v.x, v.y, dist, 0, Math.PI*2)
+    // ctx.stroke()
+
+    var p = v.original
+    var mat = v
+    var dist = mat.distance(p)
+
+    var cycles = 5
+    for (var t=1; t<=cycles; t++) {
+
+      ctx.beginPath()
+      ctx.strokeStyle = `hsl(${(i / medialAxis.length) * 360}, 50%, 50%)`
+      var inc = p.lerp(mat, t/cycles, true)
+      ctx.arc(inc.x, inc.y, 5, 0, Math.PI*2)
+
+      ctx.beginPath()
+      var r = poly.closestPointTo(inc).distance(inc)
+      // var closest = poly.closestPointTo(v)
+      // var dist = closest.distance(v)
+      ctx.moveTo(inc.x + r, inc.y)
+      ctx.arc(inc.x, inc.y, r, 0, Math.PI*2)
+      if (t === cycles) {
+        ctx.save()
+        ctx.lineWidth = 2
+        ctx.stroke()
+        ctx.restore()
+      } else {
+        ctx.stroke()
+      }
+    }
+  }) 	 	
 }
